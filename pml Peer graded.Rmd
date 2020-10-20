@@ -1,0 +1,174 @@
+---
+title: "pml"
+author: "Muskan"
+date: "10/20/2020"
+output:
+  word_document: default
+  html_document: default
+---
+
+Details regarding the assignment:
+
+So basically for the analysis of this project, I have collected some databases from NIKE,FITBIT,etc. These datasets I will be using for my final project of Practical Machine Learning.
+
+So basically we are checking whether the exercises are being done with utmost precision or not and also we check whether they are int the correct order.'
+
+Step 1 of this project:Dataset Loading
+Step 2:Data is being processed
+Step 3:the next step would be exploration of the dataset.
+Step 4:Now we need to predict the model we will be selecting to get the output.
+Step 5:Now, we will be predicting the data on the given dataset for testing.
+
+
+
+
+
+```{r}
+library(caret)
+
+library(knitr)
+
+library(data.table)
+
+library(rpart.plot)
+
+library(rpart)
+
+library(gbm)
+
+library(ggplot2)
+
+library(corrplot)
+
+```
+
+Exploring and cleaning the data.
+
+```{r}
+tU <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+
+traU  <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+
+d_tst <- read.csv(url(tU))
+
+d_tr <- read.csv(url(traU))
+
+
+
+
+```
+
+In this step we would be cleaning the data.
+```{r}
+train_dat <- d_tr[, colSums(is.na(d_tr)) == 0]
+
+test_d <- d_tst[, colSums(is.na(d_tst)) == 0]
+
+
+```
+
+Next step is prediction of the data. So 30% is used for testing our dataset and 70% for training the set we are using in this project.
+
+```{r}
+train_dat <- train_dat[, -c(1:7)]
+
+test_d <- test_d[, -c(1:7)]
+
+dim(train_dat)
+
+
+```
+in this step we are deleting the variables that are non-zero referred to as 'nz' in this code
+```{r}
+set.seed(1234)
+
+dtrain <- createDataPartition(d_tr$classe, p = 0.7, list = FALSE)
+
+
+train_dat <- train_dat[dtrain, ]
+
+test_d <- train_dat[-dtrain, ]
+
+dim(train_dat)
+
+dim(test_d)
+
+```
+
+```{r}
+
+nZ <- nearZeroVar(train_dat)
+
+train_dat <- train_dat[, -nZ]
+
+test_d <- test_d[, -nZ]
+
+dim(train_dat)
+
+dim(test_d)
+
+```
+
+```{r}
+
+p_cor <- cor(train_dat[, -53])
+
+corrplot(p_cor, order = "FPC", method = "color", type = "upper", tl.cex = 0.8, tl.col = rgb(0, 0, 0))
+
+```
+the corr. predic. are with the dark colour intersec.This is the observation in this case.
+
+Next step is the building of our model for the dataset we are using.
+The Algorithms we will be using are trees and random forests for the prediction part.
+
+```{r}
+set.seed(20000)
+
+tr <- rpart(classe ~ ., data=train_dat, method = "class")
+
+rpart.plot(tr)
+
+
+```
+
+Validation of the model
+```{r}
+modp <- predict(tr, test_d, type = "class")
+
+ab <- confusionMatrix(modp, test_d$classe)
+
+ab
+
+```
+
+```{r}
+
+plot(modp)
+
+
+```
+
+Lets apply two models in this case:
+First is General boosted model.
+Second is gbm model.
+
+```{r}
+set.seed(10000)
+
+cand_gbm <- trainControl(method = "repeatedcv", number = 5, repeats = 1)
+
+val <- train(classe ~ .,data=train_dat, method = "gbm", trControl = cand_gbm, verbose = FALSE)
+val$finalModel
+
+```
+
+Conclusion:
+Prediction that someone did the exercise order wise.
+Ananlysing using some techniques like cross validation.
+This is the end of my project.Hope you find it useful and i would like to thank the Profs. for helping me out!!
+I am attaching the outputs as well for further use if required.
+
+
+
+
+
